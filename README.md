@@ -1,1 +1,3 @@
 # go-design-patterns-and-stuff
+
+The intention of this repository is to go deeper inside the Go knowledge by adding some exercises and explanations for things like design patterns, algorithms, among others...

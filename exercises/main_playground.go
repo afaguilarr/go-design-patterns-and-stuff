@@ -2,25 +2,35 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 func main() {
-	var myString = new(string)
+	var input string
 
-	fmt.Println("Please input a floating number, using point as a separator:")
-	_, err := fmt.Scan(myString)
-	if err != nil {
-		fmt.Println("There was an error in the input, please try again")
-		return
+	//Create slice of lenght 3
+	slice := make([]int, 3)
+
+	for input != "x" {
+		fmt.Println("Enter an integer number: ")
+		_, err1 := fmt.Scan(&input)
+		input = strings.ToLower(input)
+		number, err2 := strconv.Atoi(input)
+
+		if err1 == nil && err2 == nil {
+			slice = append(slice, number)
+			fmt.Println("input: ", number)
+			fmt.Println("slice: ", slice)
+
+		}
 	}
 
-	myFloat, err := strconv.ParseFloat(*myString, 64)
-	if err != nil {
-		fmt.Println("There was an error while trying to parse the float number, please try again")
-		return
-	}
+	slice = slice[3:len(slice)]
+	fmt.Println("slice: ", slice)
 
-	myInt := int(myFloat)
-	fmt.Printf("The truncated version of the number you used as an input is: %v\n", myInt)
+	sort.Ints(slice)
+	fmt.Println("slice: ", slice)
+
 }

@@ -2,35 +2,43 @@ package main
 
 import (
 	"fmt"
-	"sort"
-	"strconv"
+	"os"
 	"strings"
 )
 
-func main() {
-	var input string
+type Name struct {
+	fname, lname string
+}
 
-	//Create slice of lenght 3
-	slice := make([]int, 3)
+func buildNameList(fileName string) []Name {
+	nameList := make([]Name, 0, 20)
+	f, err := os.Open(fileName)
+	bArr := make([]byte, 42)
 
-	for input != "x" {
-		fmt.Println("Enter an integer number: ")
-		_, err1 := fmt.Scan(&input)
-		input = strings.ToLower(input)
-		number, err2 := strconv.Atoi(input)
-
-		if err1 == nil && err2 == nil {
-			slice = append(slice, number)
-			fmt.Println("input: ", number)
-			fmt.Println("slice: ", slice)
-
+	nb, readErr := f.Read(bArr)
+	if err == nil && readErr == nil {
+		for nb != 0 {
+			fullName := strings.Split(string(bArr), " ")
+			first, last := fullName[0], fullName[1]
+			nameList = append(nameList, Name{first, last})
+			nb, readErr = f.Read(bArr)
 		}
+	} else {
+		fmt.Println("Oh no! We could not read from this file. Please try again.")
 	}
 
-	slice = slice[3:len(slice)]
-	fmt.Println("slice: ", slice)
+	return nameList
+}
 
-	sort.Ints(slice)
-	fmt.Println("slice: ", slice)
+func main() {
+	var fileName string
 
+	fmt.Print("What is the name of your file? ")
+	fmt.Scan(&fileName)
+
+	nameList := buildNameList(fileName)
+	fmt.Println(nameList)
+	for _, name := range nameList {
+		fmt.Printf("First name: %s, Last name: %s", name.fname, name.lname)
+	}
 }

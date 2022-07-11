@@ -1,104 +1,74 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"math"
-	"os"
-	"sort"
-	"strconv"
-	"strings"
 	"sync"
 )
 
-func Swap(s []int, i int) {
-	temp := s[i]
-	s[i] = s[i+1]
-	s[i+1] = temp
+type ChopS struct {
+	sync.Mutex
 }
 
-func BubbleSort(s []int, wg *sync.WaitGroup) {
-	fmt.Printf("Go routine sorting slice : %v\n", s)
-	size := len(s)
+type Philo struct {
+	leftCS, rightCS *ChopS
+	number          int
+}
 
-	for countdown := size; countdown >= 1; countdown-- {
-		for i := 0; i < countdown-1; i++ {
-			if s[i] > s[i+1] {
-				Swap(s, i)
-			}
-		}
+func (p Philo) eat(wg *sync.WaitGroup, hosting chan int) {
+	for i := 0; i < 3; i++ {
+		hosting <- i
+		p.leftCS.Lock()
+		p.rightCS.Lock()
+		fmt.Printf("<%d> starts eating (this philos %d. eat number) \n", p.number, i+1)
+		fmt.Printf("<%d> finishes the (eating number %d) \n", p.number, i+1)
+		p.rightCS.Unlock()
+		p.leftCS.Unlock()
+		<-hosting
 	}
-	fmt.Printf("sorted slice : %v\n", s)
-
 	wg.Done()
 }
 
+// func hosting(host chan int, perm chan int, resp chan int) {
+// 	for {
+// 		hosting, ok := <-host
+
+// 		if ok == false {
+// 			fmt.Println(hosting, ok, "Finished.")
+// 			break
+// 		} else {
+// 			fmt.Printf("[%d] wanted perm.\n", hosting)
+// 			perm <- hosting
+// 		}
+// 	}
+// }
+
+var wg sync.WaitGroup
+
 func main() {
-	var wg sync.WaitGroup
+	// perm := make(chan int)
+	// resp := make(chan int)
+	CSticks := make([]*ChopS, 5)
 
-	// input
-	fmt.Print("Enter a serie of numbers : ")
-	input := bufio.NewReader(os.Stdin)
-	line, _ := input.ReadString('\n')
+	for i := 0; i < 5; i++ {
 
-	numbers := []int{}
-	for _, f := range strings.Fields(line) {
-		myNumber, _ := strconv.Atoi(f)
-		numbers = append(numbers, myNumber)
+		CSticks[i] = new(ChopS)
+
 	}
 
-	fmt.Println(numbers)
-
-	var size = len(numbers)
-	var nParts = 4
-	var partSize = int(math.Ceil(float64(size) / 4))
-	var parts [][]int
-
-	fmt.Printf("numbers : %d, parts : %d, partSize : %d\n", size, nParts, partSize)
-
-	// divide slice into nParts slices
-	for i := 0; i < size; i += partSize {
-		end := i + partSize
-
-		if end > size {
-			end = size
+	philos := make([]*Philo, 5)
+	num := 1
+	for i := 0; i < 5; i++ {
+		philos[i] = &Philo{
+			leftCS:  CSticks[i],
+			rightCS: CSticks[(i+1)%5],
+			number:  num + i,
 		}
-
-		parts = append(parts, numbers[i:end])
 	}
-	//fmt.Printf("%v\n", parts)
+	host := make(chan int, 2)
 
-	//  sort all parts in go routines
-	for i := 0; i < len(parts); i++ {
+	for i := 0; i < 5; i++ {
 		wg.Add(1)
-		go BubbleSort(parts[i], &wg)
+		go philos[i].eat(&wg, host)
 	}
-
 	wg.Wait()
-	//fmt.Printf("%v\n", parts)
-
-	// merge all parts into numbersSorted slice
-	numbersSorted := []int{}
-	for i := 0; i < len(parts); i++ {
-		s1 := parts[i]
-
-		for _, x := range s1 {
-			//fmt.Println(x)
-			ind := sort.Search(len(numbersSorted), func(i int) bool { return numbersSorted[i] > x })
-			fmt.Println("wtf1: ", numbersSorted)
-			numbersSorted = append(numbersSorted, 0)
-			fmt.Println("wtf2: ", numbersSorted)
-			copy(numbersSorted[ind+1:], numbersSorted[ind:])
-			fmt.Println("wtf3: ", numbersSorted)
-			numbersSorted[ind] = x
-			fmt.Println("wtf4: ", numbersSorted)
-		}
-		//fmt.Println(numbersSorted)
-
-	}
-
-	fmt.Println(numbersSorted)
-
-	//BubbleSort(numbers)
-	//fmt.Println(numbers)
 }
